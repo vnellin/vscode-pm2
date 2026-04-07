@@ -42,6 +42,27 @@ function activate(context) {
     });
     context.subscriptions.push(refreshCommand);
 
+    const logsCommand = vscode.commands.registerCommand('vscode-pm2.logs', async () => {
+        const config = vscode.workspace.getConfiguration('vscode-pm2');
+        const processNames = config.get('processNames') || ['local.dev', 'local.prod'];
+        if (processNames.length === 0) {
+            vscode.window.showErrorMessage('No PM2 processes configured. Please add process names in settings.');
+            return;
+        }
+        let processName;
+        if (processNames.length === 1) {
+            processName = processNames[0];
+        } else {
+            const selected = await vscode.window.showQuickPick(processNames, {
+                placeHolder: 'Select PM2 process to show logs'
+            });
+            if (!selected) return;
+            processName = selected;
+        }
+        showLogs(processName);
+    });
+    context.subscriptions.push(logsCommand);
+
     // Start periodic refresh
     refreshInterval = setInterval(() => {
         refreshAllProcesses();
@@ -165,20 +186,9 @@ function execCommand(command, processName) {
 }
 
 async function showLogs(processName) {
-    const config = vscode.workspace.getConfiguration('vscode-pm2');
-    const maxLines = config.get('logsMaxLines') || 100;
-
-    exec(`pm2 logs ${processName} --lines ${maxLines} --nostream`, (error, stdout, stderr) => {
-        if (error) {
-            vscode.window.showErrorMessage(`Failed to get logs for ${processName}: ${error.message}`);
-            return;
-        }
-
-        const outputChannel = vscode.window.createOutputChannel(`PM2 Logs: ${processName}`);
-        outputChannel.clear();
-        outputChannel.append(stdout || stderr);
-        outputChannel.show();
-    });
+    const terminal = vscode.window.createTerminal(`PM2 Logs: ${processName}`);
+    terminal.sendText(`pm2 logs ${processName}`);
+    terminal.show();
 }
 
 module.exports = {

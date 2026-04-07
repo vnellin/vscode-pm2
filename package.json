@@ -74,4 +74,9 @@
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.2.0"
   }
+  ,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vnellin/vscode-pm2.git"
+  }
 }
