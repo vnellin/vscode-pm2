@@ -1,0 +1,77 @@
+{
+  "name": "vscode-pm2",
+  "displayName": "PM2 Process Manager",
+  "description": "Manage PM2 processes from VS Code status bar",
+  "version": "1.0.0",
+  "publisher": "vscode-pm2",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-pm2.refresh",
+        "title": "PM2: Refresh processes"
+      },
+      {
+        "command": "vscode-pm2.start",
+        "title": "PM2: Start process"
+      },
+      {
+        "command": "vscode-pm2.stop",
+        "title": "PM2: Stop process"
+      },
+      {
+        "command": "vscode-pm2.restart",
+        "title": "PM2: Restart process"
+      },
+      {
+        "command": "vscode-pm2.logs",
+        "title": "PM2: Show logs"
+      }
+    ],
+    "configuration": {
+      "title": "PM2 Process Manager",
+      "properties": {
+        "vscode-pm2.processNames": {
+          "type": "array",
+          "default": [
+            "local.dev",
+            "local.prod"
+          ],
+          "description": "List of PM2 process names to monitor"
+        },
+        "vscode-pm2.refreshInterval": {
+          "type": "number",
+          "default": 5000,
+          "description": "Refresh interval in milliseconds"
+        },
+        "vscode-pm2.logsMaxLines": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of lines to show in logs"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "package": "vsce package",
+    "package:major": "npm version major --no-git-tag-version && vsce package",
+    "package:minor": "npm version minor --no-git-tag-version && vsce package",
+    "package:patch": "npm version patch --no-git-tag-version && vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@types/vscode": "^1.110.0",
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^10.2.0"
+  }
+}
