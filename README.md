@@ -6,7 +6,7 @@ This extension allows you to monitor and manage PM2 processes directly from VS C
 
 - Display PM2 process status in status bar
 - Start, stop, restart processes via context menu
-- View logs in output channel
+- View logs in terminal
 - Configurable process names
 - Automatic refresh interval
 
@@ -14,9 +14,9 @@ This extension allows you to monitor and manage PM2 processes directly from VS C
 
 Extension settings:
 
-- `vscode-pm2.processNames`: Array of PM2 process names to monitor (default: `["local.dev", "local.prod"]`)
-- `vscode-pm2.refreshInterval`: Refresh interval in milliseconds (default: `5000`)
-- `vscode-pm2.logsMaxLines`: Maximum lines to show in logs (default: `100`)
+- `pm2-status.processNames`: Array of PM2 process names to monitor (required, no default)
+- `pm2-status.refreshInterval`: Refresh interval in milliseconds (default: `5000`)
+
 
 ## Usage
 

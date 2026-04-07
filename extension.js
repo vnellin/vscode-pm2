@@ -4,13 +4,18 @@ const path = require('path');
 
 let statusBarItems = {};
 let refreshInterval;
+let extensionContext;
+let currentProcessNames = [];
+let commandDisposables = {};
 
 function activate(context) {
     console.log('PM2 Process Manager extension activated');
 
-    const config = vscode.workspace.getConfiguration('vscode-pm2');
-    const processNames = config.get('processNames') || ['local.dev', 'local.prod'];
+    const config = vscode.workspace.getConfiguration('pm2-status');
+    const processNames = config.get('processNames') || [];
     const refreshIntervalMs = config.get('refreshInterval') || 5000;
+    extensionContext = context;
+    currentProcessNames = processNames.slice();
 
     // Check if PM2 is available
     exec('pm2 --version', (error) => {
@@ -21,30 +26,18 @@ function activate(context) {
 
     // Create status bar items for each process
     processNames.forEach(processName => {
-        const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-        statusBarItem.text = `$(loading~spin) ${processName}`;
-        statusBarItem.tooltip = `PM2 process: ${processName}`;
-        statusBarItem.command = `vscode-pm2.${processName}.menu`;
-        statusBarItem.show();
-        statusBarItems[processName] = statusBarItem;
-
-        // Register command for context menu
-        const commandName = `vscode-pm2.${processName}.menu`;
-        const command = vscode.commands.registerCommand(commandName, () => {
-            showProcessMenu(processName);
-        });
-        context.subscriptions.push(command);
+        createStatusBarItemAndCommand(processName);
     });
 
     // Register global commands
-    const refreshCommand = vscode.commands.registerCommand('vscode-pm2.refresh', () => {
+    const refreshCommand = vscode.commands.registerCommand('pm2-status.refresh', () => {
         refreshAllProcesses();
     });
     context.subscriptions.push(refreshCommand);
 
-    const logsCommand = vscode.commands.registerCommand('vscode-pm2.logs', async () => {
-        const config = vscode.workspace.getConfiguration('vscode-pm2');
-        const processNames = config.get('processNames') || ['local.dev', 'local.prod'];
+    const logsCommand = vscode.commands.registerCommand('pm2-status.logs', async () => {
+        const config = vscode.workspace.getConfiguration('pm2-status');
+    const processNames = config.get('processNames') || [];
         if (processNames.length === 0) {
             vscode.window.showErrorMessage('No PM2 processes configured. Please add process names in settings.');
             return;
@@ -63,6 +56,17 @@ function activate(context) {
     });
     context.subscriptions.push(logsCommand);
 
+    // Listen for configuration changes
+    const configDisposable = vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('pm2-status')) {
+            const newConfig = vscode.workspace.getConfiguration('pm2-status');
+            const newProcessNames = newConfig.get('processNames') || [];
+            const newRefreshIntervalMs = newConfig.get('refreshInterval') || 5000;
+            updateStatusBarItems(newProcessNames, newRefreshIntervalMs);
+        }
+    });
+    context.subscriptions.push(configDisposable);
+
     // Start periodic refresh
     refreshInterval = setInterval(() => {
         refreshAllProcesses();
@@ -78,11 +82,13 @@ function deactivate() {
     }
     Object.values(statusBarItems).forEach(item => item.dispose());
     statusBarItems = {};
+    Object.values(commandDisposables).forEach(disposable => disposable.dispose());
+    commandDisposables = {};
 }
 
 async function refreshAllProcesses() {
-    const config = vscode.workspace.getConfiguration('vscode-pm2');
-    const processNames = config.get('processNames') || ['local.dev', 'local.prod'];
+    const config = vscode.workspace.getConfiguration('pm2-status');
+    const processNames = config.get('processNames') || [];
 
     for (const processName of processNames) {
         await updateProcessStatus(processName);
@@ -138,6 +144,59 @@ async function updateProcessStatus(processName) {
             resolve();
         });
     });
+}
+
+function createStatusBarItemAndCommand(processName) {
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    statusBarItem.text = `$(loading~spin) ${processName}`;
+    statusBarItem.tooltip = `PM2 process: ${processName}`;
+    statusBarItem.command = `pm2-status.${processName}.menu`;
+    statusBarItem.show();
+    statusBarItems[processName] = statusBarItem;
+
+    const commandName = `pm2-status.${processName}.menu`;
+    const command = vscode.commands.registerCommand(commandName, () => {
+        showProcessMenu(processName);
+    });
+    commandDisposables[processName] = command;
+    extensionContext.subscriptions.push(command);
+}
+
+function updateStatusBarItems(newProcessNames, newRefreshIntervalMs) {
+    // Update process names
+    const oldProcessNames = currentProcessNames.slice();
+    const toAdd = newProcessNames.filter(name => !oldProcessNames.includes(name));
+    const toRemove = oldProcessNames.filter(name => !newProcessNames.includes(name));
+
+    // Remove status bar items for processes no longer in config
+    toRemove.forEach(processName => {
+        const item = statusBarItems[processName];
+        if (item) {
+            item.dispose();
+            delete statusBarItems[processName];
+        }
+        const commandDisposable = commandDisposables[processName];
+        if (commandDisposable) {
+            commandDisposable.dispose();
+            delete commandDisposables[processName];
+        }
+    });
+
+    // Add status bar items for new processes
+    toAdd.forEach(processName => {
+        createStatusBarItemAndCommand(processName);
+    });
+
+    // Update currentProcessNames
+    currentProcessNames = newProcessNames.slice();
+
+    // Update refresh interval if changed
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+    refreshInterval = setInterval(() => {
+        refreshAllProcesses();
+    }, newRefreshIntervalMs);
 }
 
 async function showProcessMenu(processName) {

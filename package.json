@@ -1,9 +1,9 @@
 {
-  "name": "vscode-pm2",
+  "name": "pm2-status",
   "displayName": "PM2 Process Manager",
   "description": "Manage PM2 processes from VS Code status bar",
-  "version": "1.0.0",
-  "publisher": "vscode-pm2",
+  "version": "1.1.0",
+  "publisher": "pm2-status",
   "engines": {
     "vscode": "^1.110.0"
   },
@@ -17,46 +17,38 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-pm2.refresh",
+        "command": "pm2-status.refresh",
         "title": "PM2: Refresh processes"
       },
       {
-        "command": "vscode-pm2.start",
+        "command": "pm2-status.start",
         "title": "PM2: Start process"
       },
       {
-        "command": "vscode-pm2.stop",
+        "command": "pm2-status.stop",
         "title": "PM2: Stop process"
       },
       {
-        "command": "vscode-pm2.restart",
+        "command": "pm2-status.restart",
         "title": "PM2: Restart process"
       },
       {
-        "command": "vscode-pm2.logs",
+        "command": "pm2-status.logs",
         "title": "PM2: Show logs"
       }
     ],
     "configuration": {
       "title": "PM2 Process Manager",
       "properties": {
-        "vscode-pm2.processNames": {
+        "pm2-status.processNames": {
           "type": "array",
-          "default": [
-            "local.dev",
-            "local.prod"
-          ],
-          "description": "List of PM2 process names to monitor"
+          "default": [],
+          "description": "List of PM2 process names to monitor (required)"
         },
-        "vscode-pm2.refreshInterval": {
+        "pm2-status.refreshInterval": {
           "type": "number",
           "default": 5000,
           "description": "Refresh interval in milliseconds"
-        },
-        "vscode-pm2.logsMaxLines": {
-          "type": "number",
-          "default": 100,
-          "description": "Maximum number of lines to show in logs"
         }
       }
     }
@@ -73,10 +65,9 @@
     "@types/vscode": "^1.110.0",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.2.0"
-  }
-  ,
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vnellin/vscode-pm2.git"
+    "url": "https://github.com/vnellin/pm2-status.git"
   }
 }
